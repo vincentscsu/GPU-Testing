@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        printf("There are %d cuda-capable device(s) on this system.\n");
+        printf("There are %d cuda-capable device(s) on this system.\n", deviceCount);
     }
 
     for (int i = 0; i < deviceCount; i++)
