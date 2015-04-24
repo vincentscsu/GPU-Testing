@@ -20,7 +20,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        printf("There are %d cuda-capable device(s) on this system.\n");
+        printf("There are %d cuda-capable device(s) on this system.\n", deviceCount);
     }
 
     for (int i = 0; i < deviceCount; i++)
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
         printf("CUDA Capability Major/Minor               %d.%d\n",
                 deviceProp.major, deviceProp.minor);
         //SM counts
-        printf("Numver of Multprocessors                  %d\n",
+        printf("Number of Multprocessors                  %d\n",
                 deviceProp.multiProcessorCount);
         //warp size
         printf("Warp Size                                 %d\n",
@@ -73,10 +73,10 @@ int main(int argc, char **argv)
                 (unsigned long long)deviceProp.totalGlobalMem);
         //constant memory
         printf("Total Constant Memory                     %lu bytes\n",
-                deviceProp.totalConstMem);
+                (unsigned long)(deviceProp.totalConstMem));
         //shared memory
         printf("Shared Memory Per Block                   %lu bytes\n",
-                deviceProp.sharedMemPerBlock);
+                (unsigned long)(deviceProp.sharedMemPerBlock));
         //registers per block
         printf("Registers Available Per Block             %d\n",
                 deviceProp.regsPerBlock);
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
                 deviceProp.maxTexture2DLayered[1], deviceProp.maxTexture2DLayered[2]);
         //max memory pitch
         printf("Max Memory Pitch                          %lu bytes\n",
-                deviceProp.memPitch);
+                (unsigned long)(deviceProp.memPitch));
     }
     
     int best = best_device();
