@@ -66,6 +66,7 @@ void check_result(float *A, float *B, int size)
 }
 
 
+<<<<<<< HEAD
 int main(int argc, char *argv[])
 {
     //return device info
@@ -76,6 +77,7 @@ int main(int argc, char *argv[])
     CHECK(cudaSetDevice(dev));
 
     //initialize data size;
+<<<<<<< HEAD
     int nelem = 1 << 24;
     printf("Array size: %d elements\n", nelem);
     
