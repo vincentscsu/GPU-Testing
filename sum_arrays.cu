@@ -3,7 +3,7 @@
 #include "check.h"
 
 /*This program generates two arrays of 16M elements to test the device's
- *cpability.
+ *cpability. User can specify threads per block by doing: ./<prog> <block.x>.
  */
 
 //Host summation funciton
@@ -66,7 +66,7 @@ void check_result(float *A, float *B, int size)
 }
 
 
-int main()
+int main(int argc, char *argv[])
 {
     //return device info
     int dev = 0;
@@ -76,50 +76,57 @@ int main()
     CHECK(cudaSetDevice(dev));
 
     //initialize data size;
-    int size = 1 << 24;
-    printf("Array size: %d elements\n", size);
+    int nelem = 1 << 24;
+    printf("Array size: %d elements\n", nelem);
     
+    int size = nelem*sizeof(float);
+
     //allocate host memory
     float *h_A, *h_B, *h_C, *cpu_result;
-    h_A = (float*)malloc(size*sizeof(float));
-    h_B = (float*)malloc(size*sizeof(float));
-    h_C = (float*)malloc(size*sizeof(float));
-    cpu_result = (float*)malloc(size*sizeof(float));
+    h_A = (float*)malloc(size);
+    h_B = (float*)malloc(size);
+    h_C = (float*)malloc(size);
+    cpu_result = (float*)malloc(size);
 
     //initialize data on host
-    data_init(h_A, size);
-    data_init(h_B, size);
-    memset(h_C, 0, size);
-    memset(cpu_result, 0 ,size);
+    data_init(h_A, nelem);
+    data_init(h_B, nelem);
+    memset(h_C, 0, nelem);
+    memset(cpu_result, 0 ,nelem);
 
     //get ready to time cpu summation
     double start, elapsed;
 
     //summation on host for reference
     start = seconds();
-    sum_CPU(h_A, h_B, cpu_result, size);
+    sum_CPU(h_A, h_B, cpu_result, nelem);
     elapsed = seconds() - start;
     printf("sum_CPU uesed: %f sec\n", elapsed);
     
     //allocate device global memory
     float *d_A, *d_B, *d_C;
-    CHECK(cudaMalloc((float**)&d_A, size*sizeof(float)));
-    CHECK(cudaMalloc((float**)&d_B, size*sizeof(float)));
-    CHECK(cudaMalloc((float**)&d_C, size*sizeof(float)));
+    CHECK(cudaMalloc((float**)&d_A, size));
+    CHECK(cudaMalloc((float**)&d_B, size));
+    CHECK(cudaMalloc((float**)&d_C, size));
 
     //copy data from host to device
-    CHECK(cudaMemcpy(d_A, h_A, size*sizeof(float), cudaMemcpyHostToDevice));
-    CHECK(cudaMemcpy(d_B, h_B, size*sizeof(float), cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice));
+    CHECK(cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice));
 
     //kernel specs
-    dim3 block (1024,1,1);
-    dim3 grid (((size-1)/block.x)+1, 1 ,1);
+    int block_dim_x = 1024;
+    if (argc > 1)
+    {
+        block_dim_x = atoi(argv[1]);
+    }
+    dim3 block (block_dim_x,1,1);
+    dim3 grid (((nelem-1)/block.x)+1, 1 ,1);
     
     //get ready to time the kernel
     start = seconds();
 
     //launch kernel
-    sum_GPU<<<grid,block>>>(d_A, d_B, d_C, size);
+    sum_GPU<<<grid,block>>>(d_A, d_B, d_C, nelem);
     CHECK(cudaDeviceSynchronize());
     elapsed = seconds() - start;
     printf("sum_GPU<<< %d , %d >>> used: %f sec\n", grid.x, block.x, elapsed);
@@ -128,10 +135,10 @@ int main()
     CHECK(cudaGetLastError());
 
     //copy result from device to host
-    CHECK(cudaMemcpy(h_C, d_C, size*sizeof(float), cudaMemcpyDeviceToHost));
+    CHECK(cudaMemcpy(h_C, d_C, size, cudaMemcpyDeviceToHost));
 
     //check results
-    check_result(cpu_result, h_C, size);
+    check_result(cpu_result, h_C, nelem);
 
     //free device global memory
     CHECK(cudaFree(d_A));
@@ -143,6 +150,9 @@ int main()
     free(h_B);
     free(h_C);
     free(cpu_result);
+
+    //reset device
+    CHECK(cudaDeviceReset());
 
     return 0;
 }
